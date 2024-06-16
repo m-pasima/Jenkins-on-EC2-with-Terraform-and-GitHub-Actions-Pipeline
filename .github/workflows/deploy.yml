@@ -22,6 +22,13 @@ jobs:
       run: terraform init
       working-directory: terraform
 
+    - name: Terraform Destroy
+      run: terraform destroy -auto-approve -var 'key_name=${{ secrets.AWS_KEY_PAIR_NAME }}'
+      working-directory: terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
     - name: Terraform Apply
       run: terraform apply -auto-approve -var 'key_name=${{ secrets.AWS_KEY_PAIR_NAME }}'
       working-directory: terraform
@@ -46,10 +53,19 @@ jobs:
         echo "[jenkins_servers]" > ansible/hosts.ini
         echo "${{ steps.get_ip.outputs.instance_ip }}" >> ansible/hosts.ini
 
+    - name: Create .ssh directory
+      run: mkdir -p /home/runner/.ssh
+
+    - name: Add SSH key
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > /home/runner/.ssh/id_rsa
+        chmod 600 /home/runner/.ssh/id_rsa
+      shell: bash
+
     - name: Start SSH Agent and Add Key
       run: |
         eval $(ssh-agent -s)
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+        ssh-add /home/runner/.ssh/id_rsa
       shell: bash
 
     - name: Add Known Hosts
@@ -59,3 +75,4 @@ jobs:
       run: ansible-playbook -i ansible/hosts.ini ansible/install_jenkins.yml
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'False'
+        ANSIBLE_PRIVATE_KEY_FILE: /home/runner/.ssh/id_rsa
