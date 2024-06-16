@@ -46,19 +46,16 @@ jobs:
         echo "[jenkins_servers]" > ansible/hosts.ini
         echo "${{ steps.get_ip.outputs.instance_ip }}" >> ansible/hosts.ini
 
-    - name: Create .ssh directory
-      run: mkdir -p /home/runner/.ssh
-
-    - name: Add SSH key
+    - name: Start SSH Agent and Add Key
       run: |
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa
-        chmod 600 /home/runner/.ssh/id_rsa
+        eval $(ssh-agent -s)
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+      shell: bash
 
-    - name: Debug SSH Key Permissions
-      run: ls -l /home/runner/.ssh && cat /home/runner/.ssh/id_rsa
+    - name: Add Known Hosts
+      run: ssh-keyscan -H ${{ steps.get_ip.outputs.instance_ip }} >> ~/.ssh/known_hosts
 
     - name: Run Ansible Playbook
       run: ansible-playbook -i ansible/hosts.ini ansible/install_jenkins.yml
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'False'
-        ANSIBLE_PRIVATE_KEY_FILE: /home/runner/.ssh/id_rsa
