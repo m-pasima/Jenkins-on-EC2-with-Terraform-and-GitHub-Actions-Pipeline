@@ -54,10 +54,11 @@ jobs:
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa
         chmod 600 /home/runner/.ssh/id_rsa
 
+    - name: Debug SSH Key Permissions
+      run: ls -l /home/runner/.ssh && cat /home/runner/.ssh/id_rsa
+
     - name: Run Ansible Playbook
       run: ansible-playbook -i ansible/hosts.ini ansible/install_jenkins.yml
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'False'
         ANSIBLE_PRIVATE_KEY_FILE: /home/runner/.ssh/id_rsa
-
-
