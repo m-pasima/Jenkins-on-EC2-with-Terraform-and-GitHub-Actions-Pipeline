@@ -28,6 +28,8 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      with:
+        args: -var 'key_name=${{ secrets.AWS_KEY_PAIR_NAME }}'
 
     - name: Retrieve instance IP
       id: get_ip
@@ -51,4 +53,5 @@ jobs:
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'False'
         ANSIBLE_PRIVATE_KEY_FILE: ${{ secrets.SSH_PRIVATE_KEY }}
+
 
