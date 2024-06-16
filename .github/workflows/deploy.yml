@@ -62,17 +62,30 @@ jobs:
         chmod 600 /home/runner/.ssh/id_rsa
       shell: bash
 
+    - name: Debug SSH Key Permissions and Content
+      run: |
+        ls -la /home/runner/.ssh
+        cat /home/runner/.ssh/id_rsa
+      shell: bash
+
     - name: Start SSH Agent and Add Key
       run: |
         eval $(ssh-agent -s)
         ssh-add /home/runner/.ssh/id_rsa
+        ssh-add -l
       shell: bash
 
     - name: Add Known Hosts
       run: ssh-keyscan -H ${{ steps.get_ip.outputs.instance_ip }} >> ~/.ssh/known_hosts
+
+    - name: Test SSH Connection
+      run: |
+        ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ steps.get_ip.outputs.instance_ip }} hostname
+      shell: bash
 
     - name: Run Ansible Playbook
       run: ansible-playbook -i ansible/hosts.ini ansible/install_jenkins.yml
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'False'
         ANSIBLE_PRIVATE_KEY_FILE: /home/runner/.ssh/id_rsa
+
