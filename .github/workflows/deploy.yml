@@ -58,7 +58,7 @@ jobs:
 
     - name: Add SSH Key
       run: |
-        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | tr -d '\r' | tee /home/runner/.ssh/id_rsa > /dev/null
         chmod 600 /home/runner/.ssh/id_rsa
       shell: bash
 
