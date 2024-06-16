@@ -1,4 +1,4 @@
-# Jenkins on EC2 with Terraform and GitHub Actions
+# Jenkins on EC2 with Terraform and GitHub Actions Pipeline
 
 <img src="https://img.shields.io/badge/-Jenkins-D24939?&style=for-the-badge&logo=Jenkins&logoColor=white" alt="Jenkins"> <img src="https://img.shields.io/badge/-GitHub_Actions-2088FF?&style=for-the-badge&logo=GitHub-Actions&logoColor=white" alt="GitHub Actions"> <img src="https://img.shields.io/badge/-Terraform-623CE4?&style=for-the-badge&logo=Terraform&logoColor=white" alt="Terraform">
 
