@@ -1,6 +1,7 @@
 variable "key_name" {
   description = "The name of the SSH key pair"
   type        = string
+  default     = "jenkins"
 }
 
 variable "region" {
@@ -8,3 +9,4 @@ variable "region" {
   type        = string
   default     = "eu-west-2"
 }
+
