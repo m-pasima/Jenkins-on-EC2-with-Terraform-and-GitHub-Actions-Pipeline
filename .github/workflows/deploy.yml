@@ -46,6 +46,9 @@ jobs:
         echo "[jenkins_servers]" > ansible/hosts.ini
         echo "${{ steps.get_ip.outputs.instance_ip }}" >> ansible/hosts.ini
 
+    - name: Create .ssh directory
+      run: mkdir -p /home/runner/.ssh
+
     - name: Add SSH key
       run: |
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa
@@ -56,4 +59,5 @@ jobs:
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'False'
         ANSIBLE_PRIVATE_KEY_FILE: /home/runner/.ssh/id_rsa
+
 
