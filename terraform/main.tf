@@ -50,11 +50,11 @@ resource "aws_security_group" "allow_ssh_and_jenkins" {
 }
 
 resource "aws_instance" "jenkins_server" {
-  ami           = "ami-0b53285ea6c7a08a7" # Amazon Linux 2 AMI
-  instance_type = "t2.micro"
-  key_name      = var.key_name
-  subnet_id     = aws_subnet.main.id
-  security_groups = [aws_security_group.allow_ssh_and_jenkins.name]
+  ami                     = "ami-0b53285ea6c7a08a7" # Amazon Linux 2 AMI
+  instance_type           = "t2.micro"
+  key_name                = var.key_name
+  subnet_id               = aws_subnet.main.id
+  vpc_security_group_ids  = [aws_security_group.allow_ssh_and_jenkins.id]
 
   tags = {
     Name = "JenkinsServer"
