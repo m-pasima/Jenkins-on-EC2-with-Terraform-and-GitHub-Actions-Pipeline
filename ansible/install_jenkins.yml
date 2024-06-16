@@ -1,0 +1,63 @@
+---
+- name: Install and Configure Jenkins
+  hosts: jenkins_servers
+  become: yes
+  tasks:
+    - name: Ensure that software packages are up to date
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Add Jenkins repo
+      get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+        mode: '0644'
+
+    - name: Import Jenkins key
+      rpm_key:
+        key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+        state: present
+
+    - name: Upgrade packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install Java
+      yum:
+        name: java-17-amazon-corretto
+        state: present
+
+    - name: Install Jenkins
+      yum:
+        name: jenkins
+        state: present
+
+    - name: Enable Jenkins service
+      systemd:
+        name: jenkins
+        enabled: yes
+
+    - name: Start Jenkins service
+      systemd:
+        name: jenkins
+        state: started
+
+    - name: Wait for Jenkins to start
+      uri:
+        url: http://localhost:8080
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 10
+      delay: 15
+
+    - name: Get Jenkins initial admin password
+      command: cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_admin_password
+
+    - name: Display Jenkins initial admin password
+      debug:
+        msg: "Jenkins initial admin password is {{ jenkins_admin_password.stdout }}"
+
