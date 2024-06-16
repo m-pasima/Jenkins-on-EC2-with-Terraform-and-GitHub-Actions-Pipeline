@@ -91,7 +91,7 @@ resource "aws_instance" "jenkins_server" {
                   https://pkg.jenkins.io/redhat-stable/jenkins.repo
               sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
               sudo yum upgrade -y
-              sudo amazon-linux-extras install java-openjdk11 -y
+              sudo dnf install java-17-amazon-corretto -y
               sudo yum install jenkins -y
               sudo systemctl enable jenkins
               sudo systemctl start jenkins
@@ -102,18 +102,15 @@ resource "aws_instance" "jenkins_server" {
               done
 
               # Initial Jenkins setup
-              JENKINS_CLI_CMD="java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080/ -auth admin:admin"
-
-              # Create admin user
               sudo curl -LO http://localhost:8080/jnlpJars/jenkins-cli.jar
               ADMIN_PASSWORD=$(sudo cat /var/lib/jenkins/secrets/initialAdminPassword)
               echo "jenkins.model.Jenkins.instance.securityRealm.createAccount('admin', 'admin')" | java -jar jenkins-cli.jar -s http://localhost:8080/ -auth admin:$ADMIN_PASSWORD groovy =
 
               # Install plugins
-              echo "install-plugin git matrix-auth workflow-aggregator docker-workflow blueocean credentials-binding" | $JENKINS_CLI_CMD
+              java -jar jenkins-cli.jar -s http://localhost:8080/ -auth admin:admin install-plugin git matrix-auth workflow-aggregator docker-workflow blueocean credentials-binding
 
               # Restart Jenkins
-              echo "safe-restart" | $JENKINS_CLI_CMD
+              java -jar jenkins-cli.jar -s http://localhost:8080/ -auth admin:admin safe-restart
               EOF
 
   tags = {
@@ -128,4 +125,5 @@ resource "aws_instance" "jenkins_server" {
 output "instance_ip" {
   value = aws_instance.jenkins_server.public_ip
 }
+
 
