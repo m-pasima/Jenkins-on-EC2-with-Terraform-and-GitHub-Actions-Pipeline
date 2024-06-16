@@ -11,16 +11,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Check authorized user
+        id: check-auth
+        run: |
+          if [ "${{ github.actor }}" == "m-pasima" ]; then
+            echo "Authorized user: ${{ github.actor }}"
+            echo "::set-output name=authorized::true"
+          else
+            echo "Unauthorized user: ${{ github.actor }}"
+            echo "::set-output name=authorized::false"
+          fi
+
       - name: Set up Terraform
+        if: steps.check-auth.outputs.authorized == 'true'
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.0.0
 
       - name: Terraform Init
+        if: steps.check-auth.outputs.authorized == 'true'
         run: terraform init
         working-directory: terraform
 
       - name: Terraform Apply
+        if: steps.check-auth.outputs.authorized == 'true'
         run: terraform apply -auto-approve
         working-directory: terraform
         env:
@@ -28,6 +42,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Retrieve instance IP
+        if: steps.check-auth.outputs.authorized == 'true'
         id: get_ip
         run: echo "::set-output name=instance_ip::$(cat terraform/ip_address.txt)"
 
