@@ -32,10 +32,10 @@ resource "aws_route_table" "main" {
 }
 
 resource "aws_subnet" "main" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "${var.region}a"
-  map_public_ip_on_launch = true
+  vpc_id                   = aws_vpc.main.id
+  cidr_block               = "10.0.1.0/24"
+  availability_zone        = "${var.region}a"
+  map_public_ip_on_launch  = true
 
   tags = {
     Name = "main_subnet"
@@ -83,6 +83,38 @@ resource "aws_instance" "jenkins_server" {
   subnet_id               = aws_subnet.main.id
   vpc_security_group_ids  = [aws_security_group.allow_ssh_and_jenkins.id]
   associate_public_ip_address = true
+
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo yum update -y
+              sudo wget -O /etc/yum.repos.d/jenkins.repo \
+                  https://pkg.jenkins.io/redhat-stable/jenkins.repo
+              sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+              sudo yum upgrade -y
+              sudo amazon-linux-extras install java-openjdk11 -y
+              sudo yum install jenkins -y
+              sudo systemctl enable jenkins
+              sudo systemctl start jenkins
+
+              # Wait for Jenkins to start
+              while ! sudo systemctl status jenkins | grep "active (running)"; do
+                sleep 5
+              done
+
+              # Initial Jenkins setup
+              JENKINS_CLI_CMD="java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080/ -auth admin:admin"
+
+              # Create admin user
+              sudo curl -LO http://localhost:8080/jnlpJars/jenkins-cli.jar
+              ADMIN_PASSWORD=$(sudo cat /var/lib/jenkins/secrets/initialAdminPassword)
+              echo "jenkins.model.Jenkins.instance.securityRealm.createAccount('admin', 'admin')" | java -jar jenkins-cli.jar -s http://localhost:8080/ -auth admin:$ADMIN_PASSWORD groovy =
+
+              # Install plugins
+              echo "install-plugin git matrix-auth workflow-aggregator docker-workflow blueocean credentials-binding" | $JENKINS_CLI_CMD
+
+              # Restart Jenkins
+              echo "safe-restart" | $JENKINS_CLI_CMD
+              EOF
 
   tags = {
     Name = "JenkinsServer"
