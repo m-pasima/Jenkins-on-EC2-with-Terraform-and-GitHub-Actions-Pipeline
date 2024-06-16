@@ -1,11 +1,32 @@
 provider "aws" {
-  region = "eu-west-2"
+  region = var.region
 }
 
-resource "aws_security_group" "jenkins_sg" {
-  name_prefix = "jenkins_sg"
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = "main_vpc"
+  }
+}
+
+resource "aws_subnet" "main" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "${var.region}a"
+
+  tags = {
+    Name = "main_subnet"
+  }
+}
+
+resource "aws_security_group" "allow_ssh_and_jenkins" {
+  name        = "allow_ssh_and_jenkins"
+  description = "Allow SSH and Jenkins traffic"
+  vpc_id      = aws_vpc.main.id
 
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -13,15 +34,9 @@ resource "aws_security_group" "jenkins_sg" {
   }
 
   ingress {
+    description = "Jenkins"
     from_port   = 8080
     to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -38,7 +53,8 @@ resource "aws_instance" "jenkins_server" {
   ami           = "ami-0b53285ea6c7a08a7" # Amazon Linux 2 AMI
   instance_type = "t2.micro"
   key_name      = var.key_name
-  security_groups = [aws_security_group.jenkins_sg.name]
+  subnet_id     = aws_subnet.main.id
+  security_groups = [aws_security_group.allow_ssh_and_jenkins.name]
 
   tags = {
     Name = "JenkinsServer"
@@ -52,3 +68,4 @@ resource "aws_instance" "jenkins_server" {
 output "instance_ip" {
   value = aws_instance.jenkins_server.public_ip
 }
+
