@@ -1,12 +1,10 @@
-name: Deploy Jenkins on EC2
+name: Apply Jenkins Infrastructure
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  apply:
     runs-on: ubuntu-latest
 
     steps:
